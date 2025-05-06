@@ -6,10 +6,10 @@
   <title>AdCoin - Earn Coins by Watching Ads</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Firebase SDK (Updated to latest 9.x version) -->
-  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore.js"></script>
+  <!-- Firebase SDK (Reverted to 9.23.0) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js" defer></script>
 </head>
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen">
   <!-- Login/Register Section -->
@@ -56,23 +56,35 @@
       appId: "1:326276084656:web:37d3f4e797c84b47bfdc75"
     };
 
-    // Initialize Firebase with enhanced error handling
+    // Initialize Firebase with retry logic
     let auth, db;
-    if (typeof firebase === 'undefined') {
-      console.error("Firebase SDK not loaded");
-      showError("Firebase SDK failed to load. Check network or script URLs.");
-    } else {
+    function initializeFirebase(attempt = 1, maxAttempts = 3) {
+      if (typeof firebase === 'undefined') {
+        console.error(`Firebase SDK not loaded (Attempt ${attempt}/${maxAttempts})`);
+        if (attempt < maxAttempts) {
+          console.log("Retrying in 2 seconds...");
+          setTimeout(() => initializeFirebase(attempt + 1, maxAttempts), 2000);
+        } else {
+          showError("Firebase SDK failed to load after multiple attempts. Check network or script URLs.");
+        }
+        return;
+      }
+
       try {
         console.log("Initializing Firebase...");
         firebase.initializeApp(firebaseConfig);
         auth = firebase.auth();
         db = firebase.firestore();
         console.log("Firebase initialized successfully");
+        setupAuthStateListener();
       } catch (error) {
         console.error("Firebase initialization failed:", error.message);
         showError("Firebase initialization failed: " + error.message);
       }
     }
+
+    // Call initialization
+    initializeFirebase();
 
     // Show Register Form
     function showRegister() {
@@ -263,25 +275,27 @@
       });
     }
 
-    // Check Auth State
-    if (auth) {
-      auth.onAuthStateChanged((user) => {
-        if (user) {
-          console.log("Auth state changed: User logged in", user.email);
-          showDashboard(user);
-        } else {
-          console.log("Auth state changed: No user logged in");
-          document.getElementById('dashboard').classList.add('hidden');
-          document.getElementById('auth-section').classList.remove('hidden');
-          hideLoading();
-        }
-      }, (error) => {
-        console.log("Auth state error:", error.message);
-        showError("Authentication error: " + error.message);
-      });
-    } else {
-      console.error("Auth not initialized, skipping onAuthStateChanged");
-      showError("Authentication service not initialized.");
+    // Setup Auth State Listener
+    function setupAuthStateListener() {
+      if (auth) {
+        auth.onAuthStateChanged((user) => {
+          if (user) {
+            console.log("Auth state changed: User logged in", user.email);
+            showDashboard(user);
+          } else {
+            console.log("Auth state changed: No user logged in");
+            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('auth-section').classList.remove('hidden');
+            hideLoading();
+          }
+        }, (error) => {
+          console.log("Auth state error:", error.message);
+          showError("Authentication error: " + error.message);
+        });
+      } else {
+        console.error("Auth not initialized, skipping onAuthStateChanged");
+        showError("Authentication service not initialized.");
+      }
     }
   </script>
 </body>
