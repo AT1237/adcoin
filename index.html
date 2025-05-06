@@ -16,6 +16,13 @@
   <div id="auth-section" class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
     <h1 class="text-2xl font-bold mb-4 text-center">AdCoin</h1>
     <div id="error-message" class="hidden text-red-500 mb-4 text-center"></div>
+    <div id="loading" class="hidden text-center mb-4">
+      <svg class="animate-spin h-5 w-5 text-blue-500 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+      </svg>
+      <span>Loading...</span>
+    </div>
     <div id="login-form">
       <input id="login-email" type="email" placeholder="Email" class="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
       <input id="login-password" type="password" placeholder="Password" class="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -39,32 +46,32 @@
   </div>
 
   <script>
-    // Firebase Configuration (Replace with your Firebase project config)
-   // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAfShq9Z0x4sj-_u-VRDLa1umG7t8Lyf9M",
+      authDomain: "adcoin-37484.firebaseapp.com",
+      projectId: "adcoin-37484",
+      storageBucket: "adcoin-37484.firebasestorage.app",
+      messagingSenderId: "326276084656",
+      appId: "1:326276084656:web:37d3f4e797c84b47bfdc75"
+    };
 
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyAfShq9Z0x4sj-_u-VRDLa1umG7t8Lyf9M",
-  authDomain: "adcoin-37484.firebaseapp.com",
-  projectId: "adcoin-37484",
-  storageBucket: "adcoin-37484.firebasestorage.app",
-  messagingSenderId: "326276084656",
-  appId: "1:326276084656:web:37d3f4e797c84b47bfdc75"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+    // Initialize Firebase with error handling
+    let auth, db;
+    try {
+      console.log("Initializing Firebase...");
+      firebase.initializeApp(firebaseConfig);
+      auth = firebase.auth();
+      db = firebase.firestore();
+      console.log("Firebase initialized successfully");
+    } catch (error) {
+      console.error("Firebase initialization failed:", error.message);
+      showError("Failed to initialize Firebase: " + error.message);
+    }
 
     // Show Register Form
     function showRegister() {
+      console.log("Showing register form");
       document.getElementById('login-form').classList.add('hidden');
       document.getElementById('register-form').classList.remove('hidden');
       clearError();
@@ -72,6 +79,7 @@ const app = initializeApp(firebaseConfig);
 
     // Show Login Form
     function showLogin() {
+      console.log("Showing login form");
       document.getElementById('register-form').classList.add('hidden');
       document.getElementById('login-form').classList.remove('hidden');
       clearError();
@@ -79,96 +87,147 @@ const app = initializeApp(firebaseConfig);
 
     // Display Error Message
     function showError(message) {
+      console.log("Displaying error:", message);
       const errorDiv = document.getElementById('error-message');
       errorDiv.textContent = message;
       errorDiv.classList.remove('hidden');
+      hideLoading();
     }
 
     // Clear Error Message
     function clearError() {
+      console.log("Clearing error");
       const errorDiv = document.getElementById('error-message');
       errorDiv.textContent = '';
       errorDiv.classList.add('hidden');
+      hideLoading();
+    }
+
+    // Show Loading Spinner
+    function showLoading() {
+      console.log("Showing loading spinner");
+      document.getElementById('loading').classList.remove('hidden');
+    }
+
+    // Hide Loading Spinner
+    function hideLoading() {
+      console.log("Hiding loading spinner");
+      document.getElementById('loading').classList.add('hidden');
     }
 
     // Register User
     function register() {
+      showLoading();
+      console.log("Register function called");
       const email = document.getElementById('register-email').value;
       const password = document.getElementById('register-password').value;
       if (!email || !password) {
+        console.log("Validation failed: Empty fields");
         showError('Please fill in all fields.');
         return;
       }
       if (password.length < 6) {
+        console.log("Validation failed: Password too short");
         showError('Password must be at least 6 characters.');
         return;
       }
+      if (!auth) {
+        console.error("Auth not initialized");
+        showError("Authentication service not initialized.");
+        return;
+      }
+      console.log("Attempting to register user:", email);
       auth.createUserWithEmailAndPassword(email, password)
         .then((userCredential) => {
+          console.log("User registered successfully:", userCredential.user.email);
           const user = userCredential.user;
-          // Initialize user data in Firestore
           return db.collection('users').doc(user.uid).set({
             email: email,
             coins: 0,
-            lastAdWatched: 0 // For rate-limiting ads
+            lastAdWatched: 0
           });
         })
         .then(() => {
+          console.log("User data saved to Firestore");
           showDashboard(auth.currentUser);
         })
         .catch((error) => {
+          console.log("Registration error:", error.message);
           showError(error.message);
         });
     }
 
     // Login User
     function login() {
+      showLoading();
+      console.log("Login function called");
       const email = document.getElementById('login-email').value;
       const password = document.getElementById('login-password').value;
       if (!email || !password) {
+        console.log("Validation failed: Empty fields");
         showError('Please fill in all fields.');
         return;
       }
+      if (!auth) {
+        console.error("Auth not initialized");
+        showError("Authentication service not initialized.");
+        return;
+      }
+      console.log("Attempting to login user:", email);
       auth.signInWithEmailAndPassword(email, password)
         .then((userCredential) => {
+          console.log("User logged in successfully:", userCredential.user.email);
           showDashboard(userCredential.user);
         })
         .catch((error) => {
+          console.log("Login error:", error.message);
           showError(error.message);
         });
     }
 
     // Logout User
     function logout() {
+      console.log("Logout function called");
       auth.signOut().then(() => {
+        console.log("User logged out");
         document.getElementById('dashboard').classList.add('hidden');
         document.getElementById('auth-section').classList.remove('hidden');
         clearError();
+      }).catch((error) => {
+        console.log("Logout error:", error.message);
+        showError(error.message);
       });
     }
 
     // Show Dashboard
     function showDashboard(user) {
+      console.log("Showing dashboard for user:", user.email);
       document.getElementById('auth-section').classList.add('hidden');
       document.getElementById('dashboard').classList.remove('hidden');
       document.getElementById('user-email').textContent = user.email;
-      // Fetch and display coin balance
       db.collection('users').doc(user.uid).onSnapshot((doc) => {
         if (doc.exists) {
+          console.log("User data fetched:", doc.data());
           document.getElementById('coin-balance').textContent = doc.data().coins;
+        } else {
+          console.log("No user data found in Firestore");
+          showError("User data not found.");
         }
+      }, (error) => {
+        console.log("Firestore snapshot error:", error.message);
+        showError("Failed to fetch user data: " + error.message);
       });
+      hideLoading();
     }
 
     // Watch Ad (Placeholder for Adsterra Integration)
     function watchAd() {
+      console.log("Watch ad function called");
       const user = auth.currentUser;
       if (!user) {
         showError('Please log in to watch ads.');
         return;
       }
-
-      // Rate-limiting: Allow 1 ad every 30 seconds
       db.collection('users').doc(user.uid).get().then((doc) => {
         if (doc.exists) {
           const lastAdWatched = doc.data().lastAdWatched || 0;
@@ -177,52 +236,43 @@ const app = initializeApp(firebaseConfig);
             alert('Please wait a moment before watching another ad.');
             return;
           }
-
-          // Placeholder for Adsterra ad display
-          // Replace with actual Adsterra script from dashboard
-          // Simulating ad completion for now
           db.collection('users').doc(user.uid).update({
             coins: firebase.firestore.FieldValue.increment(1),
             lastAdWatched: now
           }).then(() => {
+            console.log("Ad watched, coins incremented");
             alert('Ad watched! +1 Coin');
+          }).catch((error) => {
+            console.log("Ad watch update error:", error.message);
+            showError(error.message);
           });
-
-          // Adsterra integration example (replace with actual script):
-          /*
-          <script>
-            (function() {
-              var ad = document.createElement('script');
-              ad.src = 'https://adsterra.com/your-ad-script.js'; // Replace with Adsterra script
-              ad.async = true;
-              document.body.appendChild(ad);
-              ad.onload = function() {
-                Adsterra.showInterstitial(function() {
-                  // On ad completion, increment coins
-                  db.collection('users').doc(user.uid).update({
-                    coins: firebase.firestore.FieldValue.increment(1),
-                    lastAdWatched: Date.now()
-                  }).then(() => {
-                    alert('Ad watched! +1 Coin');
-                  });
-                });
-              };
-            })();
-          </script>
-          */
         }
+      }).catch((error) => {
+        console.log("Firestore get error:", error.message);
+        showError(error.message);
       });
     }
 
     // Check Auth State
-    auth.onAuthStateChanged((user) => {
-      if (user) {
-        showDashboard(user);
-      } else {
-        document.getElementById('dashboard').classList.add('hidden');
-        document.getElementById('auth-section').classList.remove('hidden');
-      }
-    });
+    if (auth) {
+      auth.onAuthStateChanged((user) => {
+        if (user) {
+          console.log("Auth state changed: User logged in", user.email);
+          showDashboard(user);
+        } else {
+          console.log("Auth state changed: No user logged in");
+          document.getElementById('dashboard').classList.add('hidden');
+          document.getElementById('auth-section').classList.remove('hidden');
+          hideLoading();
+        }
+      }, (error) => {
+        console.log("Auth state error:", error.message);
+        showError("Authentication error: " + error.message);
+      });
+    } else {
+      console.error("Auth not initialized, skipping onAuthStateChanged");
+      showError("Authentication service not initialized.");
+    }
   </script>
 </body>
 </html>
