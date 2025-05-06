@@ -6,10 +6,10 @@
   <title>AdCoin - Earn Coins by Watching Ads</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
+  <!-- Firebase SDK (Updated to latest 9.x version) -->
+  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore.js"></script>
 </head>
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen">
   <!-- Login/Register Section -->
@@ -56,17 +56,22 @@
       appId: "1:326276084656:web:37d3f4e797c84b47bfdc75"
     };
 
-    // Initialize Firebase with error handling
+    // Initialize Firebase with enhanced error handling
     let auth, db;
-    try {
-      console.log("Initializing Firebase...");
-      firebase.initializeApp(firebaseConfig);
-      auth = firebase.auth();
-      db = firebase.firestore();
-      console.log("Firebase initialized successfully");
-    } catch (error) {
-      console.error("Firebase initialization failed:", error.message);
-      showError("Failed to initialize Firebase: " + error.message);
+    if (typeof firebase === 'undefined') {
+      console.error("Firebase SDK not loaded");
+      showError("Firebase SDK failed to load. Check network or script URLs.");
+    } else {
+      try {
+        console.log("Initializing Firebase...");
+        firebase.initializeApp(firebaseConfig);
+        auth = firebase.auth();
+        db = firebase.firestore();
+        console.log("Firebase initialized successfully");
+      } catch (error) {
+        console.error("Firebase initialization failed:", error.message);
+        showError("Firebase initialization failed: " + error.message);
+      }
     }
 
     // Show Register Form
@@ -119,6 +124,11 @@
     function register() {
       showLoading();
       console.log("Register function called");
+      if (!auth) {
+        console.error("Authentication not initialized");
+        showError("Authentication service not initialized.");
+        return;
+      }
       const email = document.getElementById('register-email').value;
       const password = document.getElementById('register-password').value;
       if (!email || !password) {
@@ -129,11 +139,6 @@
       if (password.length < 6) {
         console.log("Validation failed: Password too short");
         showError('Password must be at least 6 characters.');
-        return;
-      }
-      if (!auth) {
-        console.error("Auth not initialized");
-        showError("Authentication service not initialized.");
         return;
       }
       console.log("Attempting to register user:", email);
@@ -161,16 +166,16 @@
     function login() {
       showLoading();
       console.log("Login function called");
+      if (!auth) {
+        console.error("Authentication not initialized");
+        showError("Authentication service not initialized.");
+        return;
+      }
       const email = document.getElementById('login-email').value;
       const password = document.getElementById('login-password').value;
       if (!email || !password) {
         console.log("Validation failed: Empty fields");
         showError('Please fill in all fields.');
-        return;
-      }
-      if (!auth) {
-        console.error("Auth not initialized");
-        showError("Authentication service not initialized.");
         return;
       }
       console.log("Attempting to login user:", email);
@@ -188,6 +193,11 @@
     // Logout User
     function logout() {
       console.log("Logout function called");
+      if (!auth) {
+        console.error("Authentication not initialized");
+        showError("Authentication service not initialized.");
+        return;
+      }
       auth.signOut().then(() => {
         console.log("User logged out");
         document.getElementById('dashboard').classList.add('hidden');
