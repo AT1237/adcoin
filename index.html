@@ -6,10 +6,10 @@
   <title>AdCoin - Earn Coins by Watching Ads</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Firebase SDK (Reverted to 9.23.0) -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js" defer></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js" defer></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js" defer></script>
+  <!-- Firebase SDK via jsdelivr (Fallback) -->
+  <script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-app.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-auth.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-firestore.js" defer></script>
 </head>
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen">
   <!-- Login/Register Section -->
@@ -56,16 +56,18 @@
       appId: "1:326276084656:web:37d3f4e797c84b47bfdc75"
     };
 
-    // Initialize Firebase with retry logic
+    // Initialize Firebase with retry logic and fallback
     let auth, db;
     function initializeFirebase(attempt = 1, maxAttempts = 3) {
+      console.log(`Checking Firebase SDK availability (Attempt ${attempt}/${maxAttempts})...`);
       if (typeof firebase === 'undefined') {
         console.error(`Firebase SDK not loaded (Attempt ${attempt}/${maxAttempts})`);
         if (attempt < maxAttempts) {
           console.log("Retrying in 2 seconds...");
           setTimeout(() => initializeFirebase(attempt + 1, maxAttempts), 2000);
         } else {
-          showError("Firebase SDK failed to load after multiple attempts. Check network or script URLs.");
+          console.error("Firebase SDK failed to load after all attempts.");
+          showError("Failed to load Firebase SDK. Check your network or browser settings.");
         }
         return;
       }
