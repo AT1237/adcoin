@@ -6,8 +6,11 @@
   <title>AdCoin - Earn Coins by Watching Ads</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Supabase Client (Static Test) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/module/index.js"></script>
+  <!-- Supabase Client as Module -->
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/module/index.js';
+    window.supabase = createClient('https://auphkonsesjozkqunhis.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1cGhrb25zZXNqb3prcXVuaGlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3NzEyMDksImV4cCI6MjA2MjM0NzIwOX0.XfNPDAN_m09WbNZ0xWZwwXRu2nDatNnOn8YkPuhZsS8');
+  </script>
 </head>
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen">
   <!-- Login/Register Section -->
@@ -44,58 +47,6 @@
   </div>
 
 <script>
-  // Supabase Configuration
-  let supabase;
-  const supabaseUrl = "https://auphkonsesjozkqunhis.supabase.co";
-  const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1cGhrb25zZXNqb3prcXVuaGlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3NzEyMDksImV4cCI6MjA2MjM0NzIwOX0.XfNPDAN_m09WbNZ0xWZwwXRu2nDatNnOn8YkPuhZsS8";
-
-  // Function to load Supabase script
-  function loadSupabaseScript() {
-    const scriptUrls = [
-      "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/module/index.js",
-      "https://unpkg.com/@supabase/supabase-js@2.39.0/dist/module/index.js"
-    ];
-    let currentIndex = 0;
-
-    function tryLoadScript() {
-      if (currentIndex >= scriptUrls.length) {
-        console.error("All Supabase script sources failed to load.");
-        return; // Skip initialization if all fail, but allow other functions to work
-      }
-
-      const script = document.createElement('script');
-      script.src = scriptUrls[currentIndex];
-      script.onload = () => {
-        console.log(`Supabase script loaded from ${scriptUrls[currentIndex]}`);
-        initializeSupabase();
-      };
-      script.onerror = () => {
-        console.error(`Failed to load Supabase script from ${scriptUrls[currentIndex]}`);
-        currentIndex++;
-        tryLoadScript();
-      };
-      document.head.appendChild(script);
-    }
-
-    tryLoadScript();
-  }
-
-  // Initialize Supabase
-  function initializeSupabase() {
-    if (window.supabase && typeof window.supabase.createClient === 'function') {
-      supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
-      console.log("Supabase initialized successfully");
-      setupAuthStateListener();
-    } else {
-      console.warn("Supabase library not properly loaded. Some features may not work.");
-    }
-  }
-
-  // Load Supabase script asynchronously
-  document.addEventListener("DOMContentLoaded", () => {
-    loadSupabaseScript();
-  });
-
   // Initialize variables
   let currentUser = null;
 
@@ -147,7 +98,7 @@
 
   // Register User
   async function register() {
-    if (!supabase) {
+    if (!window.supabase) {
       showError("Supabase not initialized. Some features may not work.");
       return;
     }
@@ -167,13 +118,13 @@
     }
     try {
       console.log("Attempting to register user:", email);
-      const { data, error: authError } = await supabase.auth.signUp({
+      const { data, error: authError } = await window.supabase.auth.signUp({
         email: email,
         password: password,
       });
       if (authError) throw authError;
       console.log("User registered successfully:", data.user.email);
-      const { error: insertError } = await supabase.from('users').insert({
+      const { error: insertError } = await window.supabase.from('users').insert({
         id: data.user.id,
         email: email,
         coins: 0,
@@ -190,7 +141,7 @@
 
   // Login User
   async function login() {
-    if (!supabase) {
+    if (!window.supabase) {
       showError("Supabase not initialized. Some features may not work.");
       return;
     }
@@ -204,7 +155,7 @@
       return;
     }
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await window.supabase.auth.signInWithPassword({
         email: email,
         password: password,
       });
@@ -219,13 +170,13 @@
 
   // Logout User
   async function logout() {
-    if (!supabase) {
+    if (!window.supabase) {
       showError("Supabase not initialized. Some features may not work.");
       return;
     }
     console.log("Logout function called");
     try {
-      const { error } = await supabase.auth.signOut();
+      const { error } = await window.supabase.auth.signOut();
       if (error) throw error;
       console.log("User logged out");
       currentUser = null;
@@ -240,7 +191,7 @@
 
   // Show Dashboard
   async function showDashboard(user) {
-    if (!supabase) {
+    if (!window.supabase) {
       showError("Supabase not initialized. Some features may not work.");
       return;
     }
@@ -250,7 +201,7 @@
     document.getElementById('dashboard').classList.remove('hidden');
     document.getElementById('user-email').textContent = user.email;
     try {
-      const { data, error } = await supabase
+      const { data, error } = await window.supabase
         .from('users')
         .select('coins')
         .eq('id', user.id)
@@ -258,7 +209,7 @@
       if (error) throw error;
       if (!data) {
         console.log("No user data found, initializing...");
-        const { error: insertError } = await supabase.from('users').insert({
+        const { error: insertError } = await window.supabase.from('users').insert({
           id: user.id,
           email: user.email,
           coins: 0,
@@ -279,7 +230,7 @@
 
   // Watch Ad
   async function watchAd() {
-    if (!supabase) {
+    if (!window.supabase) {
       showError("Supabase not initialized. Some features may not work.");
       return;
     }
@@ -290,7 +241,7 @@
     }
     const now = new Date().toISOString();
     try {
-      const { data: userData, error: fetchError } = await supabase
+      const { data: userData, error: fetchError } = await window.supabase
         .from('users')
         .select('last_ad_watched')
         .eq('id', currentUser.id)
@@ -301,10 +252,10 @@
         alert('Please wait a moment before watching another ad.');
         return;
       }
-      const { error: updateError } = await supabase
+      const { error: updateError } = await window.supabase
         .from('users')
         .update({
-          coins: supabase.sql`coins + 1`,
+          coins: window.supabase.sql`coins + 1`,
           last_ad_watched: now
         })
         .eq('id', currentUser.id);
@@ -320,11 +271,11 @@
 
   // Setup Auth State Listener
   function setupAuthStateListener() {
-    if (!supabase) {
+    if (!window.supabase) {
       console.warn("Supabase not initialized, skipping auth state listener");
       return;
     }
-    supabase.auth.onAuthStateChange((event, session) => {
+    window.supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         console.log("Auth state changed: User logged in", session.user.email);
         showDashboard(session.user);
@@ -336,6 +287,11 @@
         hideLoading();
       }
     });
+  }
+
+  // Initialize auth state listener if Supabase is available
+  if (window.supabase) {
+    setupAuthStateListener();
   }
 </script>
 </body>
