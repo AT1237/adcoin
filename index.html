@@ -5,12 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AdCoin - Earn Coins by Watching Ads</title>
   <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Supabase Client as Module -->
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/module/index.js';
-    window.supabase = createClient('https://auphkonsesjozkqunhis.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1cGhrb25zZXNqb3prcXVuaGlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3NzEyMDksImV4cCI6MjA2MjM0NzIwOX0.XfNPDAN_m09WbNZ0xWZwwXRu2nDatNnOn8YkPuhZsS8');
-  </script>
+ <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase-lite.js"></script>
+<script>
+  window.supabase = window.SupabaseClient;
+</script>
 </head>
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen">
   <!-- Login/Register Section -->
